@@ -1,0 +1,16 @@
+{
+  "Group": "Friends",
+  "Name": "Hytale Friends",
+  "Version": "0.1.0",
+  "Description": "Quality of life improvements for playing with friends in Hytale",
+  "Authors": [{"Name": "Jairo", "Email": "", "Url": ""}],
+  "Main": "com.friends.FriendsPlugin",
+  "ServerVersion": "*",
+  "Dependencies": {
+    "Hytale:EntityModule": "*",
+    "Hytale:AssetModule": "*"
+  },
+  "OptionalDependencies": {},
+  "DisabledByDefault": false,
+  "IncludesAssetPack": true
+}
