@@ -82,14 +82,12 @@ public class ListParticlesCommand extends AbstractPlayerCommand {
                         "Healing", "Poison", "Regen", "Buff", "Aura"
                     };
 
+                    java.util.List<String> validNames = new java.util.ArrayList<>();
                     for (String name : commonNames) {
                         try {
                             var asset = assetMap.getAsset(name);
                             if (asset != null) {
-                                if (filter == null || name.toLowerCase().contains(filter)) {
-                                    player.sendMessage(Message.raw("  ✓ " + name).color(Color.GREEN));
-                                    shown++;
-                                }
+                                validNames.add(name);
                                 count++;
                             }
                         } catch (Exception e) {
@@ -97,7 +95,15 @@ public class ListParticlesCommand extends AbstractPlayerCommand {
                         }
                     }
 
-                    player.sendMessage(Message.raw("[Particles] Found " + count + " valid particle types").color(Color.GRAY));
+                    // Show all valid particle names
+                    for (String name : validNames) {
+                        if (filter == null || name.toLowerCase().contains(filter)) {
+                            player.sendMessage(Message.raw("  - " + name).color(Color.GREEN));
+                            shown++;
+                        }
+                    }
+
+                    player.sendMessage(Message.raw("[Particles] Found " + count + " valid types").color(Color.GRAY));
                 }
             } catch (Exception e) {
                 player.sendMessage(Message.raw("[Particles] Could not iterate assets: " + e.getMessage()).color(Color.YELLOW));
