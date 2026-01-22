@@ -82,9 +82,9 @@ public class FriendsPlugin extends JavaPlugin {
             }
         });
 
-        // Handle PlayerInteractEvent for F key on BlockEntities (brazier)
-        // PlayerInteractEvent is keyed by player UUID string, use "*" for all players
-        getEventRegistry().register(PlayerInteractEvent.class, "*", event -> {
+        // Handle PlayerInteractEvent for F key - use registerGlobal like spaceship mod
+        getEventRegistry().registerGlobal(PlayerInteractEvent.class, event -> {
+            // Log ALL interactions to see what's happening
             System.out.println("[Friends] PlayerInteractEvent fired!");
             System.out.println("[Friends] ActionType: " + event.getActionType());
             System.out.println("[Friends] TargetEntity: " + event.getTargetEntity());

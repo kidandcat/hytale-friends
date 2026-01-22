@@ -59,9 +59,9 @@ public class BalloonSystem {
 
     // Block type for the balloon basket and toggle
     private static final String BALLOON_BLOCK_TYPE = "Soil_Pebbles_Frozen";
-    // Note: Custom pack blocks don't work with BlockEntity.assembleDefaultBlockEntity()
-    // Using Deco_Lever which has IsUsable=true for F key prompt
-    private static final String TOGGLE_BLOCK_TYPE = "Deco_Lever";
+    // Custom pack block with FriendsBalloonToggle interaction defined
+    // This works with world.setBlock() (unlike BlockEntity.assembleDefaultBlockEntity())
+    private static final String TOGGLE_BLOCK_TYPE = "Friends_Balloon_Brazier";
 
     // Map ALL block entity refs to balloon IDs for interaction handling
     private final Map<Ref<EntityStore>, Integer> blockToBalloon = new ConcurrentHashMap<>();
@@ -389,6 +389,31 @@ public class BalloonSystem {
                 Math.pow(playerPos.x - balloonPos.x, 2) +
                 Math.pow(playerPos.y - balloonPos.y, 2) +
                 Math.pow(playerPos.z - balloonPos.z, 2)
+            );
+
+            if (dist < closestDist && dist <= maxRange) {
+                closestDist = dist;
+                closestId = balloon.getId();
+            }
+        }
+
+        return closestId;
+    }
+
+    /**
+     * Get the nearest balloon to a position within a given range
+     * Used by the BalloonToggleInteraction when we don't have player UUID
+     */
+    public Integer getNearestBalloonInRangeByPosition(double x, double y, double z, double maxRange) {
+        double closestDist = Double.MAX_VALUE;
+        Integer closestId = null;
+
+        for (Balloon balloon : balloons.values()) {
+            Vector3d balloonPos = balloon.getLastKnownPosition();
+            double dist = Math.sqrt(
+                Math.pow(x - balloonPos.x, 2) +
+                Math.pow(y - balloonPos.y, 2) +
+                Math.pow(z - balloonPos.z, 2)
             );
 
             if (dist < closestDist && dist <= maxRange) {

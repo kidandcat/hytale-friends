@@ -1,24 +1,25 @@
 package com.friends.features.balloon;
 
-import com.hypixel.hytale.server.core.modules.interaction.interaction.config.client.SimpleBlockInteraction;
-import com.hypixel.hytale.server.core.universe.world.World;
-import com.hypixel.hytale.server.core.inventory.ItemStack;
+import com.hypixel.hytale.server.core.modules.interaction.interaction.config.SimpleInstantInteraction;
 import com.hypixel.hytale.server.core.entity.InteractionContext;
-import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.modules.interaction.interaction.CooldownHandler;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.protocol.InteractionType;
-import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
+import com.hypixel.hytale.math.vector.Vector3d;
 import com.friends.FriendsPlugin;
 
 /**
  * Custom interaction for toggling balloon flight when pressing F on the brazier.
- * This interaction is registered and used by block types that want balloon toggle functionality.
+ * This is triggered when the player presses F on a block with this interaction type.
+ *
+ * Based on WarpCrystals mod pattern - extends SimpleInstantInteraction.
  */
-public class BalloonToggleInteraction extends SimpleBlockInteraction {
+public class BalloonToggleInteraction extends SimpleInstantInteraction {
 
     public static final BuilderCodec<BalloonToggleInteraction> CODEC =
         BuilderCodec.builder(BalloonToggleInteraction.class, BalloonToggleInteraction::new).build();
@@ -28,30 +29,43 @@ public class BalloonToggleInteraction extends SimpleBlockInteraction {
     }
 
     @Override
-    protected void interactWithBlock(
-            World world,
-            CommandBuffer<EntityStore> commandBuffer,
+    protected void firstRun(
             InteractionType interactionType,
             InteractionContext context,
-            ItemStack itemStack,
-            Vector3i blockPos,
             CooldownHandler cooldownHandler
     ) {
-        System.out.println("[BalloonToggle] interactWithBlock called at " + blockPos);
+        System.out.println("[BalloonToggle] ============================================");
+        System.out.println("[BalloonToggle] firstRun() CALLED!");
         System.out.println("[BalloonToggle] InteractionType: " + interactionType);
+        System.out.println("[BalloonToggle] ============================================");
 
-        // Get the player from the interaction context
+        // Get the command buffer to access entity data
+        CommandBuffer<EntityStore> commandBuffer = context.getCommandBuffer();
+        if (commandBuffer == null) {
+            System.out.println("[BalloonToggle] CommandBuffer is null");
+            return;
+        }
+
+        // Get the entity (player) from the interaction context
         Ref<EntityStore> entityRef = context.getEntity();
         if (entityRef == null) {
             System.out.println("[BalloonToggle] No entity ref");
             return;
         }
 
-        // Get the player component
-        Player player = commandBuffer.getComponent(entityRef, Player.getComponentType());
-        if (player == null) {
-            System.out.println("[BalloonToggle] No player component");
-            return;
+        System.out.println("[BalloonToggle] Entity ref: " + entityRef);
+
+        // Get the store to access components
+        Store<EntityStore> store = commandBuffer.getExternalData().getStore();
+
+        // Get the transform component to find player location
+        TransformComponent transform = store.getComponent(entityRef, TransformComponent.getComponentType());
+        Vector3d position = null;
+        if (transform != null) {
+            position = transform.getPosition();
+            System.out.println("[BalloonToggle] Player position: " + position.x + ", " + position.y + ", " + position.z);
+        } else {
+            System.out.println("[BalloonToggle] No transform component");
         }
 
         // Get the balloon system
@@ -61,27 +75,23 @@ public class BalloonToggleInteraction extends SimpleBlockInteraction {
             return;
         }
 
-        // Find the balloon at this position and toggle it
-        String posKey = blockPos.x + "," + blockPos.y + "," + blockPos.z;
-        System.out.println("[BalloonToggle] Looking for balloon at " + posKey);
+        // Try to find a balloon near the player and toggle it
+        if (position != null) {
+            Integer nearestBalloon = balloonSystem.getNearestBalloonInRangeByPosition(
+                position.x,
+                position.y,
+                position.z,
+                5.0
+            );
 
-        // Call the balloon system to handle the toggle (pass null to skip block type check)
-        if (balloonSystem.toggleBalloonAtPosition(blockPos)) {
-            System.out.println("[BalloonToggle] Balloon toggled!");
+            if (nearestBalloon != null) {
+                System.out.println("[BalloonToggle] Found balloon #" + nearestBalloon + " near player, toggling!");
+                balloonSystem.toggle(nearestBalloon, null); // Pass null for UUID, toggle will handle it
+            } else {
+                System.out.println("[BalloonToggle] No balloon found near player");
+            }
         } else {
-            System.out.println("[BalloonToggle] No balloon found at this position");
+            System.out.println("[BalloonToggle] Cannot find balloon - no position available");
         }
-    }
-
-    @Override
-    protected void simulateInteractWithBlock(
-            InteractionType interactionType,
-            InteractionContext context,
-            ItemStack itemStack,
-            World world,
-            Vector3i blockPos
-    ) {
-        // Client-side simulation (visual feedback)
-        System.out.println("[BalloonToggle] simulateInteractWithBlock at " + blockPos);
     }
 }
